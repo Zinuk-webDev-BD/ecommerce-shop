@@ -10,6 +10,7 @@ const swaggerSpec = require("./configuration/swaggerConfig");
 const dbConfig = require("./configuration/dbConfig");
 const { redisConfig } = require("./configuration/redisConfig");
 const authRoutes = require("./routes/authRoutes");
+const categoryRoutes = require("./routes/categoryRoutes");
 
 const PORT = process.env.PORT || 8000;
 const BASE_URL = process.env.BASE_URL || "/api/v1";
@@ -30,6 +31,9 @@ app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
 // auth routes
 app.use(BASE_URL + "/auth", authRoutes);
+
+// category routes
+app.use(BASE_URL + "/categories", categoryRoutes);
 
 // connect MongoDB and Redis first, then start the server
 const startServer = async () => {
