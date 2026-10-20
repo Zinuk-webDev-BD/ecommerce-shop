@@ -1,0 +1,39 @@
+const dns = require("dns");
+// set DNS first so Atlas can connect
+dns.setServers(["8.8.8.8", "1.1.1.1"]);
+
+require("dotenv").config();
+const express = require("express");
+const cors = require("cors");
+const swaggerUi = require("swagger-ui-express");
+const swaggerSpec = require("./configuration/swaggerConfig");
+const dbConfig = require("./configuration/dbConfig");
+const { redisConfig } = require("./configuration/redisConfig");
+
+const PORT = process.env.PORT || 8000;
+
+const app = express();
+
+app.use(cors());
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+
+// health check route
+app.get("/", (req, res) => {
+  res.json({ message: "Ecommerce shop API is running" });
+});
+
+// swagger docs page
+app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
+
+// connect MongoDB and Redis first, then start the server
+const startServer = async () => {
+  dbConfig();
+  await redisConfig();
+
+  app.listen(PORT, () => {
+    console.log("Server is running on: " + PORT);
+  });
+};
+
+startServer();
