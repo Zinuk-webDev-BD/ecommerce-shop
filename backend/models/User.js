@@ -24,6 +24,12 @@ const userSchema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
+    // user er role, shobai user hishebe shuru hobe, admin database theke manually set korte hobe
+    role: {
+      type: String,
+      enum: ["user", "admin"],
+      default: "user",
+    },
     // user kothay theke login korche, local, google, github
     provider: {
       type: String,

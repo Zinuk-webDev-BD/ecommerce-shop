@@ -3,7 +3,7 @@ const swaggerSpec = {
   info: {
     title: "Ecommerce Shop API",
     version: "1.0.0",
-    description: "Auth APIs: register, verify otp, login, password and profile",
+    description: "Ecommerce backend with auth, products, cart, orders and payment",
   },
   servers: [{ url: "http://localhost:8000/api/v1" }],
   components: {
@@ -179,6 +179,18 @@ const swaggerSpec = {
         responses: {
           200: { description: "User profile" },
           401: { description: "Token missing or invalid" },
+        },
+      },
+    },
+    "/auth/admin-check": {
+      get: {
+        tags: ["Auth"],
+        summary: "Admin only test route",
+        security: [{ bearerAuth: [] }],
+        responses: {
+          200: { description: "You are an admin" },
+          401: { description: "Token missing or invalid" },
+          403: { description: "Admin access only" },
         },
       },
     },
