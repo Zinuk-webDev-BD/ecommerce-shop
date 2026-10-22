@@ -1,5 +1,7 @@
 const productPaths = require("./swaggerProductPaths");
+const cartPaths = require("./swaggerCartPaths");
 const categoryPaths = require("./swaggerCategory");
+
 const swaggerSpec = {
   openapi: "3.0.0",
   info: {
@@ -20,9 +22,13 @@ const swaggerSpec = {
   tags: [
     { name: "Auth", description: "Authentication routes" },
     { name: "Category", description: "Product categories" },
-  ],  paths: {
-        ...productPaths,
-        ...categoryPaths,
+    { name: "Product", description: "Products with images" },
+    { name: "Cart", description: "Shopping cart (login required)" },
+  ],
+  paths: {
+    ...productPaths,
+    ...categoryPaths,
+    ...cartPaths,
     "/auth/register": {
       post: {
         tags: ["Auth"],

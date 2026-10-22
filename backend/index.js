@@ -4,6 +4,7 @@ dns.setServers(["8.8.8.8", "1.1.1.1"]);
 
 require("dotenv").config();
 const productRoutes = require("./routes/productRoutes");
+const cartRoutes = require("./routes/cartRoutes");
 const express = require("express");
 const cors = require("cors");
 const swaggerUi = require("swagger-ui-express");
@@ -23,7 +24,7 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 // product routes
 app.use(BASE_URL + "/products", productRoutes);
-
+app.use(BASE_URL + "/cart", cartRoutes);
 // health check route
 app.get("/", (req, res) => {
   res.json({ message: "Ecommerce shop API is running" });
