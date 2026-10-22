@@ -3,6 +3,7 @@ const dns = require("dns");
 dns.setServers(["8.8.8.8", "1.1.1.1"]);
 
 require("dotenv").config();
+const productRoutes = require("./routes/productRoutes");
 const express = require("express");
 const cors = require("cors");
 const swaggerUi = require("swagger-ui-express");
@@ -20,6 +21,8 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+// product routes
+app.use(BASE_URL + "/products", productRoutes);
 
 // health check route
 app.get("/", (req, res) => {
