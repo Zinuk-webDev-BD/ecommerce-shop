@@ -6,9 +6,38 @@ const idParam = {
   schema: { type: "string" },
 };
 
+// a small helper for query parameters
+const queryParam = (name, description, schema) => ({
+  name,
+  in: "query",
+  required: false,
+  description,
+  schema,
+});
+
 // product apis for swagger
 const productPaths = {
   "/products": {
+    get: {
+      tags: ["Product"],
+      summary: "List products with search, filter, sort and pagination",
+      parameters: [
+        queryParam("search", "search in product name", { type: "string" }),
+        queryParam("category", "category id", { type: "string" }),
+        queryParam("minPrice", "minimum price", { type: "number" }),
+        queryParam("maxPrice", "maximum price", { type: "number" }),
+        queryParam("sort", "sort order", {
+          type: "string",
+          enum: ["newest", "price_asc", "price_desc"],
+        }),
+        queryParam("page", "page number (default 1)", { type: "integer", default: 1 }),
+        queryParam("limit", "items per page (default 10, max 50)", { type: "integer", default: 10 }),
+      ],
+      responses: {
+        200: { description: "products with page, total and totalPages" },
+        400: { description: "invalid category id or price" },
+      },
+    },
     post: {
       tags: ["Product"],
       summary: "Create a product with images (admin only, max 5 images, 2MB each)",

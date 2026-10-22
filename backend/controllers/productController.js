@@ -47,6 +47,77 @@ const createProduct = async (req, res) => {
   }
 };
 
+// list products with search, filter, sort and pagination (anyone can see)
+const getProducts = async (req, res) => {
+  try {
+    const { search, category, minPrice, maxPrice, sort } = req.query;
+
+    // page and limit, with safe defaults (limit max 50)
+    const page = Math.max(parseInt(req.query.page) || 1, 1);
+    const limit = Math.min(Math.max(parseInt(req.query.limit) || 10, 1), 50);
+
+    // only active products are shown to customers
+    const filter = { isActive: true };
+
+    if (search && search.trim()) {
+      // escape special regex characters so the search is safe
+      const safe = search.trim().replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+      filter.name = { $regex: safe, $options: "i" };
+    }
+
+    if (category) {
+      if (!mongoose.isValidObjectId(category)) {
+        return res.status(400).json({ message: "invalid category id" });
+      }
+      filter.category = category;
+    }
+
+    if (minPrice !== undefined || maxPrice !== undefined) {
+      filter.price = {};
+      if (minPrice !== undefined) {
+        if (isNaN(Number(minPrice))) {
+          return res.status(400).json({ message: "minPrice must be a number" });
+        }
+        filter.price.$gte = Number(minPrice);
+      }
+      if (maxPrice !== undefined) {
+        if (isNaN(Number(maxPrice))) {
+          return res.status(400).json({ message: "maxPrice must be a number" });
+        }
+        filter.price.$lte = Number(maxPrice);
+      }
+    }
+
+    // sort options
+    const sortOptions = {
+      newest: { createdAt: -1 },
+      price_asc: { price: 1 },
+      price_desc: { price: -1 },
+    };
+    const sortBy = sortOptions[sort] || sortOptions.newest;
+
+    const [products, total] = await Promise.all([
+      Product.find(filter)
+        .populate("category", "name")
+        .sort(sortBy)
+        .skip((page - 1) * limit)
+        .limit(limit),
+      Product.countDocuments(filter),
+    ]);
+
+    res.status(200).json({
+      page,
+      limit,
+      total,
+      totalPages: Math.ceil(total / limit),
+      count: products.length,
+      products,
+    });
+  } catch (error) {
+    res.status(500).json({ message: "server error", error: error.message });
+  }
+};
+
 // get one product (anyone can see)
 const getProduct = async (req, res) => {
   try {
@@ -129,4 +200,4 @@ const deleteProduct = async (req, res) => {
   }
 };
 
-module.exports = { createProduct, getProduct, updateProduct, deleteProduct };
+module.exports = { createProduct, getProducts, getProduct, updateProduct, deleteProduct };
