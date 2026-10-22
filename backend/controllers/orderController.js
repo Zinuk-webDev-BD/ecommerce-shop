@@ -47,10 +47,10 @@ const createOrder = async (req, res) => {
         .status(400)
         .json({ message: "phone must be like 01712345678" });
     }
-    if (paymentMethod !== "cod") {
+       if (!["cod", "sslcommerz"].includes(paymentMethod)) {
       return res
         .status(400)
-        .json({ message: "only cash on delivery (cod) is available now" });
+        .json({ message: "paymentMethod must be cod or sslcommerz" });
     }
 
     const cart = await Cart.findOne({ user: req.user._id }).populate("items.product");

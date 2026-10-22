@@ -44,6 +44,9 @@ const orderSchema = new mongoose.Schema(
       default: "pending",
     },
     totalPrice: { type: Number, required: true },
+        // online payment info (filled when sslcommerz is used)
+    transactionId: { type: String, default: "", index: true },
+    paidAt: { type: Date, default: null },
   },
   { timestamps: true }
 );

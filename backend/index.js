@@ -6,6 +6,7 @@ require("dotenv").config();
 const productRoutes = require("./routes/productRoutes");
 const cartRoutes = require("./routes/cartRoutes");
 const orderRoutes = require("./routes/orderRoutes");
+const paymentRoutes = require("./routes/paymentRoutes");
 const express = require("express");
 const cors = require("cors");
 const swaggerUi = require("swagger-ui-express");
@@ -27,6 +28,7 @@ app.use(express.urlencoded({ extended: true }));
 app.use(BASE_URL + "/products", productRoutes);
 app.use(BASE_URL + "/cart", cartRoutes);
 app.use(BASE_URL + "/orders", orderRoutes);
+app.use(BASE_URL + "/payments", paymentRoutes);
 // health check route
 app.get("/", (req, res) => {
   res.json({ message: "Ecommerce shop API is running" });

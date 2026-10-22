@@ -33,7 +33,7 @@ const orderPaths = {
                 phone: { type: "string", example: "01712345678" },
                 address: { type: "string", example: "House 10, Road 5, Mirpur" },
                 city: { type: "string", example: "Dhaka" },
-                paymentMethod: { type: "string", enum: ["cod"], example: "cod" },
+                paymentMethod: { type: "string", enum: ["cod", "sslcommerz"], example: "sslcommerz" },
               },
             },
           },
