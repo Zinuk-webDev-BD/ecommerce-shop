@@ -8,6 +8,7 @@ const cartRoutes = require("./routes/cartRoutes");
 const orderRoutes = require("./routes/orderRoutes");
 const paymentRoutes = require("./routes/paymentRoutes");
 const reviewRoutes = require("./routes/reviewRoutes");
+const adminRoutes = require("./routes/adminRoutes");
 const { startOrderCleanupJob } = require("./jobs/cancelUnpaidOrders");
 const express = require("express");
 const cors = require("cors");
@@ -32,6 +33,7 @@ app.use(BASE_URL + "/cart", cartRoutes);
 app.use(BASE_URL + "/orders", orderRoutes);
 app.use(BASE_URL + "/payments", paymentRoutes);
 app.use(BASE_URL, reviewRoutes);
+app.use(BASE_URL + "/admin", adminRoutes);
 // health check route
 app.get("/", (req, res) => {
   res.json({ message: "Ecommerce shop API is running" });
