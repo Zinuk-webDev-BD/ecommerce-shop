@@ -3,6 +3,10 @@ const Product = require("../models/Product");
 const Category = require("../models/Category");
 const cloudinary = require("../configuration/cloudinaryConfig");
 const uploadToCloudinary = require("../helpers/uploadToCloudinary");
+const { makeKey, getCache, setCache, clearCatalogCache } = require("../helpers/cache");
+
+// how many seconds a product response stays in the cache
+const CACHE_SECONDS = Number(process.env.CACHE_SECONDS) || 60;
 
 // create a product with images (admin only)
 const createProduct = async (req, res) => {
@@ -41,6 +45,9 @@ const createProduct = async (req, res) => {
       images,
     });
 
+    // the product list changed, so old cache must go
+    await clearCatalogCache();
+
     res.status(201).json({ message: "product created", product });
   } catch (error) {
     res.status(500).json({ message: "server error", error: error.message });
@@ -50,6 +57,14 @@ const createProduct = async (req, res) => {
 // list products with search, filter, sort and pagination (anyone can see)
 const getProducts = async (req, res) => {
   try {
+    // same query gives the same cache key, if it is saved we answer from redis
+    const cacheKey = await makeKey("list", req.query);
+    const cached = await getCache(cacheKey);
+    if (cached) {
+      res.set("X-Cache", "HIT");
+      return res.status(200).json(cached);
+    }
+
     const { search, category, minPrice, maxPrice, sort } = req.query;
 
     // page and limit, with safe defaults (limit max 50)
@@ -105,14 +120,20 @@ const getProducts = async (req, res) => {
       Product.countDocuments(filter),
     ]);
 
-    res.status(200).json({
+    const result = {
       page,
       limit,
       total,
       totalPages: Math.ceil(total / limit),
       count: products.length,
       products,
-    });
+    };
+
+    // save for next time (only good responses are saved, errors never are)
+    await setCache(cacheKey, result, CACHE_SECONDS);
+
+    res.set("X-Cache", "MISS");
+    res.status(200).json(result);
   } catch (error) {
     res.status(500).json({ message: "server error", error: error.message });
   }
@@ -126,12 +147,23 @@ const getProduct = async (req, res) => {
       return res.status(400).json({ message: "invalid product id" });
     }
 
+    const cacheKey = await makeKey("item", { id });
+    const cached = await getCache(cacheKey);
+    if (cached) {
+      res.set("X-Cache", "HIT");
+      return res.status(200).json(cached);
+    }
+
     const product = await Product.findById(id).populate("category", "name");
     if (!product || !product.isActive) {
       return res.status(404).json({ message: "product not found" });
     }
 
-    res.status(200).json({ product });
+    const result = { product };
+    await setCache(cacheKey, result, CACHE_SECONDS);
+
+    res.set("X-Cache", "MISS");
+    res.status(200).json(result);
   } catch (error) {
     res.status(500).json({ message: "server error", error: error.message });
   }
@@ -171,6 +203,9 @@ const updateProduct = async (req, res) => {
       return res.status(404).json({ message: "product not found" });
     }
 
+    // the product changed, so old cache must go
+    await clearCatalogCache();
+
     res.status(200).json({ message: "product updated", product });
   } catch (error) {
     res.status(500).json({ message: "server error", error: error.message });
@@ -193,6 +228,9 @@ const deleteProduct = async (req, res) => {
     // remove the images from cloudinary first
     await Promise.all(product.images.map((img) => cloudinary.uploader.destroy(img.publicId)));
     await product.deleteOne();
+
+    // the product is gone, so old cache must go
+    await clearCatalogCache();
 
     res.status(200).json({ message: "product deleted" });
   } catch (error) {

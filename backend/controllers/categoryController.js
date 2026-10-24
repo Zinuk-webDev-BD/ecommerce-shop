@@ -1,5 +1,6 @@
 const mongoose = require("mongoose");
 const Category = require("../models/Category");
+const { clearCatalogCache } = require("../helpers/cache");
 
 // make a url friendly slug from the name (Men Shoes -> men-shoes)
 const makeSlug = (name) =>
@@ -107,6 +108,9 @@ const updateCategory = async (req, res) => {
 
     await category.save();
 
+    // product responses show the category name, so old cache must go
+    await clearCatalogCache();
+
     res.status(200).json({ message: "category updated", category });
   } catch (error) {
     res.status(500).json({ message: "server error", error: error.message });
@@ -126,6 +130,9 @@ const deleteCategory = async (req, res) => {
     if (!category) {
       return res.status(404).json({ message: "category not found" });
     }
+
+    // the category is gone, so old cache must go
+    await clearCatalogCache();
 
     res.status(200).json({ message: "category deleted" });
   } catch (error) {
