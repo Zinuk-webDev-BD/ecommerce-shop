@@ -20,6 +20,9 @@ const productSchema = new mongoose.Schema(
       },
     ],
     isActive: { type: Boolean, default: true },
+        // average rating and review count, updated by the review apis
+    ratingAverage: { type: Number, default: 0 },
+    ratingCount: { type: Number, default: 0 },
   },
   { timestamps: true }
 );

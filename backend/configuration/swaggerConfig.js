@@ -2,6 +2,7 @@ const productPaths = require("./swaggerProductPaths");
 const cartPaths = require("./swaggerCartPaths");
 const orderPaths = require("./swaggerOrderPaths");
 const paymentPaths = require("./swaggerPaymentPaths");
+const reviewPaths = require("./swaggerReviewPaths");
 const categoryPaths = require("./swaggerCategory");
 
 const swaggerSpec = {
@@ -28,6 +29,7 @@ const swaggerSpec = {
     { name: "Cart", description: "Shopping cart (login required)" },
     { name: "Order", description: "Orders and checkout (login required)" },
     { name: "Payment", description: "Online payment with sslcommerz" },
+    { name: "Review", description: "Product reviews and ratings" },
   ],
   paths: {
     ...productPaths,
@@ -35,6 +37,7 @@ const swaggerSpec = {
     ...cartPaths,
     ...orderPaths,
     ...paymentPaths,
+    ...reviewPaths,
     "/auth/register": {
       post: {
         tags: ["Auth"],
