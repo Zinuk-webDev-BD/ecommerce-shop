@@ -42,6 +42,14 @@ const initPayment = async (req, res) => {
     if (order.paymentStatus === "paid") {
       return res.status(400).json({ message: "order is already paid" });
     }
+      // the order was cancelled before the money came, do not mark it as paid
+  if (order.orderStatus === "cancelled") {
+    return {
+      code: 409,
+      message: "this order was already cancelled, the payment needs a refund",
+      orderId: order._id,
+    };
+  }
     if (order.orderStatus === "cancelled") {
       return res.status(400).json({ message: "order is cancelled" });
     }

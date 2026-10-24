@@ -8,6 +8,7 @@ const cartRoutes = require("./routes/cartRoutes");
 const orderRoutes = require("./routes/orderRoutes");
 const paymentRoutes = require("./routes/paymentRoutes");
 const reviewRoutes = require("./routes/reviewRoutes");
+const { startOrderCleanupJob } = require("./jobs/cancelUnpaidOrders");
 const express = require("express");
 const cors = require("cors");
 const swaggerUi = require("swagger-ui-express");
@@ -52,6 +53,7 @@ const startServer = async () => {
 
   app.listen(PORT, () => {
     console.log("Server is running on: " + PORT);
+    startOrderCleanupJob();
   });
 };
 
