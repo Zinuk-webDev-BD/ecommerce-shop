@@ -16,6 +16,17 @@ const apiBase = () =>
     process.env.BASE_URL || "/api/v1"
   }`;
 
+// base url of the frontend, we send the customer back to the order page there
+const clientBase = () => process.env.CLIENT_URL || "http://localhost:3000";
+
+// send the customer's browser back to the frontend (303 changes POST to GET)
+const goToOrder = (res, orderId, status) => {
+  if (orderId) {
+    return res.redirect(303, `${clientBase()}/orders/${orderId}?payment=${status}`);
+  }
+  res.redirect(303, `${clientBase()}/orders`);
+};
+
 // start online payment for my order, returns the payment page link
 const initPayment = async (req, res) => {
   try {
@@ -42,14 +53,6 @@ const initPayment = async (req, res) => {
     if (order.paymentStatus === "paid") {
       return res.status(400).json({ message: "order is already paid" });
     }
-      // the order was cancelled before the money came, do not mark it as paid
-  if (order.orderStatus === "cancelled") {
-    return {
-      code: 409,
-      message: "this order was already cancelled, the payment needs a refund",
-      orderId: order._id,
-    };
-  }
     if (order.orderStatus === "cancelled") {
       return res.status(400).json({ message: "order is cancelled" });
     }
@@ -140,7 +143,16 @@ const confirmPayment = async (body) => {
     validation && Math.abs(Number(validation.amount) - order.totalPrice) < 0.01;
 
   if (!okStatus || !okTran || !okAmount) {
-    return { code: 400, message: "payment could not be verified" };
+    return { code: 400, message: "payment could not be verified", orderId: order._id };
+  }
+
+  // the order was cancelled before the money came, do not mark it as paid
+  if (order.orderStatus === "cancelled") {
+    return {
+      code: 409,
+      message: "this order was already cancelled, the payment needs a refund",
+      orderId: order._id,
+    };
   }
 
   // the condition makes sure we only mark it paid once
@@ -156,31 +168,37 @@ const confirmPayment = async (body) => {
 const paymentSuccess = async (req, res) => {
   try {
     const result = await confirmPayment(req.body);
-    res.status(result.code).json(result);
+    goToOrder(res, result.orderId, result.code === 200 ? "success" : "failed");
   } catch (error) {
-    res.status(500).json({ message: "server error", error: error.message });
+    goToOrder(res, null, "failed");
   }
 };
 
-// payment failed, the customer can try again with the init route
+// payment failed, the customer can try again from the order page
 const paymentFail = async (req, res) => {
   try {
     const { tran_id } = req.body || {};
-    if (tran_id) {
-      await Order.findOneAndUpdate(
-        { transactionId: tran_id, paymentStatus: "pending" },
-        { $set: { paymentStatus: "failed" } }
-      );
-    }
-    res.status(200).json({ message: "payment failed, you can try again" });
+    const order = tran_id
+      ? await Order.findOneAndUpdate(
+          { transactionId: tran_id, paymentStatus: "pending" },
+          { $set: { paymentStatus: "failed" } }
+        )
+      : null;
+    goToOrder(res, order ? order._id : null, "failed");
   } catch (error) {
-    res.status(500).json({ message: "server error", error: error.message });
+    goToOrder(res, null, "failed");
   }
 };
 
 // the customer closed the payment page, nothing changes in the order
 const paymentCancel = async (req, res) => {
-  res.status(200).json({ message: "payment cancelled, you can try again" });
+  try {
+    const { tran_id } = req.body || {};
+    const order = tran_id ? await Order.findOne({ transactionId: tran_id }) : null;
+    goToOrder(res, order ? order._id : null, "cancelled");
+  } catch (error) {
+    goToOrder(res, null, "cancelled");
+  }
 };
 
 module.exports = { initPayment, paymentSuccess, paymentFail, paymentCancel };
